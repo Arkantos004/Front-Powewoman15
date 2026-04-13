@@ -8,33 +8,37 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Lock } from 'lucide-react'
-
-// Credenciales demo (en producción usar un backend real)
-const ADMIN_EMAIL = 'admin@powerwoman.com'
-const ADMIN_PASSWORD = 'admin123'
+import { useAuth } from '@/hooks/use-auth'
+import { login } from '@/lib/api'
 
 export default function AdminLoginPage() {
   const router = useRouter()
+  const { login: authLogin } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
 
-    // Simular validación
-    setTimeout(() => {
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-        localStorage.setItem('adminAuth', 'true')
+    try {
+      const response = await login(email, password)
+      
+      // Verificar si es admin
+      if (response.user?.is_admin) {
+        authLogin(response.user, response.token)
         router.push('/admin')
       } else {
-        setError('Email o contraseña incorrectos')
+        setError('Esta cuenta no tiene permisos de administrador')
         setIsLoading(false)
       }
-    }, 500)
+    } catch (err: any) {
+      setError(err.message || 'Email o contraseña incorrectos')
+      setIsLoading(false)
+    }
   }
 
   return (

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Menu, Search, User, ShoppingCart, X, LogOut } from "lucide-react"
+import { Menu, Search, User, ShoppingCart, X, LogOut, Home, CheckCircle2, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
@@ -14,33 +14,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useCart } from "@/lib/cart-context"
+import { useAuth } from "@/hooks/use-auth"
 
 export function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userName, setUserName] = useState("")
+  const { isLoggedIn, user, logout, isLoading } = useAuth()
   const { getTotalQuantity } = useCart()
   const [cartCount, setCartCount] = useState(0)
   const router = useRouter()
 
   useEffect(() => {
-    // Verificar si hay usuario logueado
-    const user = localStorage.getItem("currentUser")
-    if (user) {
-      setIsLoggedIn(true)
-      setUserName(JSON.parse(user).name)
-    }
-
-    // Actualizar el contador del carrito
     setCartCount(getTotalQuantity())
   }, [getTotalQuantity])
-
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser")
-    setIsLoggedIn(false)
-    setUserName("")
-    router.push("/")
-  }
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -98,7 +83,7 @@ export function Header() {
         </Link>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {isSearchOpen ? (
             <div className="flex items-center gap-2">
               <input
@@ -135,29 +120,51 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              {isLoggedIn ? (
+              {isLoggedIn && user ? (
                 <>
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-semibold">Hola, {userName}!</p>
+                  <div className="px-2 py-1.5 border-b">
+                    <p className="text-sm font-bold text-primary">✅ SESIÓN ACTIVA</p>
+                    <p className="text-xs text-muted-foreground mt-1">{user.email}</p>
+                    <p className="text-sm font-semibold mt-2">¡Hola, {user.full_name}!</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">Mi Perfil</Link>
+                    <Link href="/profile">👤 Mi Perfil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile?tab=courses">Mis Cursos</Link>
+                    <Link href="/profile?tab=courses">📚 Mis Cursos</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile?tab=orders">Mis Compras</Link>
+                    <Link href="/profile?tab=orders">🛍️ Mis Compras</Link>
                   </DropdownMenuItem>
+                  {user.is_instructor && user.instructor_approved && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/instructor" className="font-semibold text-blue-600">📚 Panel de Instructora</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {user.is_admin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin" className="font-semibold text-amber-600">⚙️ Panel de Admin</Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
+                  <DropdownMenuItem onClick={() => logout()} className="text-destructive cursor-pointer">
                     <LogOut className="h-4 w-4 mr-2" />
                     Cerrar Sesión
                   </DropdownMenuItem>
                 </>
               ) : (
                 <>
+                  <div className="px-2 py-1.5 border-b">
+                    <p className="text-xs text-muted-foreground">No estás logueado</p>
+                  </div>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/auth/login">Iniciar Sesión</Link>
                   </DropdownMenuItem>

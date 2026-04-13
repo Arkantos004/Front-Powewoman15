@@ -1,46 +1,40 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
+import { useCart } from '@/lib/cart-context'
 
-interface CartItem {
+interface OrderItem {
   id: number
   name: string
-  price: number
+  price_cop: number
   quantity: number
 }
 
 export default function InvoicePage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([])
-  const [subtotal, setSubtotal] = useState(0)
-  const [tax, setTax] = useState(0)
-  const [total, setTotal] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const orderId = searchParams.get('orderId')
+  const { items: cartItems, clearCart } = useCart()
+
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const tax = subtotal * 0.19
+  const total = subtotal + tax
 
   useEffect(() => {
-    // Recuperar datos del carrito desde localStorage
-    const storedItems = localStorage.getItem('cartItems')
-    const storedSubtotal = localStorage.getItem('subtotal')
-    const storedTax = localStorage.getItem('tax')
-    const storedTotal = localStorage.getItem('total')
-
-    if (storedItems && storedSubtotal && storedTax && storedTotal) {
-      setCartItems(JSON.parse(storedItems))
-      setSubtotal(parseFloat(storedSubtotal))
-      setTax(parseFloat(storedTax))
-      setTotal(parseFloat(storedTotal))
-    } else {
-      // Si no hay datos, redirigir al carrito
-      router.push('/checkout')
+    if (!orderId) {
+      setError('Orden no encontrada. Redirigiendo...')
+      setTimeout(() => router.push('/checkout'), 2000)
     }
-  }, [router])
+  }, [orderId, router])
 
   const handleConfirmPayment = async () => {
     setIsProcessing(true)
@@ -50,11 +44,8 @@ export default function InvoicePage() {
       setIsProcessing(false)
       setOrderPlaced(true)
       
-      // Limpiar localStorage después de la compra
-      localStorage.removeItem('cartItems')
-      localStorage.removeItem('subtotal')
-      localStorage.removeItem('tax')
-      localStorage.removeItem('total')
+      // Limpiar carrito después de la compra
+      clearCart()
     }, 2000)
   }
 

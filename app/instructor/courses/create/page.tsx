@@ -9,26 +9,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Upload } from 'lucide-react'
-import { createProduct, uploadImage } from '@/lib/api'
+import { createCourse, uploadImage } from '@/lib/api'
 
-const categories = [
-  'Maquillaje',
-  'Skincare',
-  'Masajes',
-  'Accesorios',
-  'Belleza Natural',
-  'Herramientas',
-]
-
-export default function CreateProductPage() {
+export default function CreateCoursePage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
     description: '',
-    category: 'Maquillaje',
-    price: '',
     image_url: '',
-    stock_quantity: '0',
+    price_cop: '0',
   })
   const [preview, setPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -55,41 +44,32 @@ export default function CreateProductPage() {
     }
   }
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setIsSubmitting(true)
 
-    if (!formData.name || !formData.description || !formData.price) {
-      setError('Por favor complete todos los campos (nombre, descripción y precio)')
-      setIsSubmitting(false)
-      return
-    }
-
-    if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
-      setError('El precio debe ser un número mayor a 0')
+    if (!formData.title || !formData.description) {
+      setError('Por favor completa el título y descripción')
       setIsSubmitting(false)
       return
     }
 
     try {
-      // Llamar a la API para crear el producto
-      await createProduct({
-        name: formData.name,
+      const response = await createCourse({
+        title: formData.title,
         description: formData.description,
-        category: formData.category,
-        price_cop: parseFloat(formData.price),
         image_url: formData.image_url || undefined,
-        stock_quantity: parseInt(formData.stock_quantity) || 0,
-        is_available: true,
+        price_cop: parseFloat(formData.price_cop) || 0,
       })
 
-      // Redirigir al panel de admin
-      router.push('/admin')
+      if (response.data) {
+        router.push(`/instructor/courses/${response.data.id}`)
+      } else {
+        router.push('/instructor')
+      }
     } catch (err: any) {
-      setError(err.message || 'Error al crear el producto')
+      setError(err.message || 'Error al crear el curso')
       setIsSubmitting(false)
     }
   }
@@ -102,28 +82,30 @@ export default function CreateProductPage() {
           <div className="container mx-auto px-4 lg:px-8 max-w-2xl">
             {/* Header */}
             <div className="flex items-center gap-4 mb-8">
-              <Link href="/admin">
+              <Link href="/instructor">
                 <Button variant="ghost" size="icon" className="h-10 w-10">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
-              <h1 className="text-4xl font-bold">Agregar Producto</h1>
+              <h1 className="text-4xl font-bold">Crear Nuevo Curso</h1>
             </div>
 
-            {/* Form */}
+            {/* Error Alert */}
             {error && (
               <div className="mb-6 p-4 bg-destructive/10 border border-destructive text-destructive rounded-lg">
                 {error}
               </div>
             )}
+
+            {/* Form */}
             <form onSubmit={handleSubmit} className="bg-card rounded-lg p-8 space-y-6">
               {/* Image Upload */}
               <div>
-                <Label className="text-base font-semibold mb-3 block">Imagen del Producto (Opcional)</Label>
+                <Label className="text-base font-semibold mb-3 block">Imagen del Curso (Opcional)</Label>
                 <div className="space-y-4">
                   {/* Preview */}
                   {preview && (
-                    <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                    <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
                       <img
                         src={preview}
                         alt="Preview"
@@ -156,16 +138,16 @@ export default function CreateProductPage() {
                 </div>
               </div>
 
-              {/* Name */}
+              {/* Title */}
               <div>
-                <Label htmlFor="name" className="text-base font-semibold mb-2 block">
-                  Nombre del Producto *
+                <Label htmlFor="title" className="text-base font-semibold mb-2 block">
+                  Título del Curso *
                 </Label>
                 <Input
-                  id="name"
-                  placeholder="Ej: Paleta de Sombras Premium"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  id="title"
+                  placeholder="Ej: Introducción al Maquillaje Profesional"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="text-base"
                 />
               </div>
@@ -177,31 +159,12 @@ export default function CreateProductPage() {
                 </Label>
                 <textarea
                   id="description"
-                  placeholder="Describe los detalles del producto..."
+                  placeholder="Describe el contenido de tu curso..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  rows={4}
+                  rows={6}
                 />
-              </div>
-
-              {/* Category */}
-              <div>
-                <Label htmlFor="category" className="text-base font-semibold mb-2 block">
-                  Categoría *
-                </Label>
-                <select
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Price */}
@@ -212,41 +175,24 @@ export default function CreateProductPage() {
                 <Input
                   id="price"
                   type="number"
-                  placeholder="Ej: 50000"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  min="0"
+                  step="1000"
+                  placeholder="0"
+                  value={formData.price_cop}
+                  onChange={(e) => setFormData({ ...formData, price_cop: e.target.value })}
                   className="text-base"
                 />
               </div>
 
-              {/* Stock Quantity */}
-              <div>
-                <Label htmlFor="stock" className="text-base font-semibold mb-2 block">
-                  Cantidad en Stock *
-                </Label>
-                <Input
-                  id="stock"
-                  type="number"
-                  placeholder="Ej: 100"
-                  value={formData.stock_quantity}
-                  onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                  className="text-base"
-                />
-              </div>
-
-              {/* Submit */}
-              <div className="flex gap-4 pt-6">
-                <Link href="/admin" className="flex-1">
-                  <Button variant="outline" className="w-full" disabled={isSubmitting}>
+              {/* Buttons */}
+              <div className="flex gap-3 pt-6">
+                <Link href="/instructor" className="flex-1">
+                  <Button type="button" variant="outline" className="w-full">
                     Cancelar
                   </Button>
                 </Link>
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Guardando...' : 'Guardar Producto'}
+                <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                  {isSubmitting ? 'Creando...' : 'Crear Curso'}
                 </Button>
               </div>
             </form>

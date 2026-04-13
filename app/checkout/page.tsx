@@ -18,43 +18,28 @@ export default function CheckoutPage() {
   const total = subtotal + tax
 
   const handleProceedToPayment = async () => {
-    // Obtener token si existe
+    // Obtener token
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
 
-    if (token) {
-      // Si hay token, intentar enviar la orden a la API
-      try {
-        const orderItems = cartItems.map((item) => ({
-          product_id: item.id,
-          quantity: item.quantity,
-        }))
+    if (!token) {
+      alert('Por favor inicia sesión para continuar con la compra')
+      router.push('/auth/login')
+      return
+    }
 
-        const response = await createOrder(orderItems, token)
-        
-        // Guardar datos en localStorage para la página de invoice
-        localStorage.setItem('cartItems', JSON.stringify(cartItems))
-        localStorage.setItem('subtotal', subtotal.toString())
-        localStorage.setItem('tax', tax.toString())
-        localStorage.setItem('total', total.toString())
-        localStorage.setItem('orderId', response.data?.id || '')
+    try {
+      const orderItems = cartItems.map((item) => ({
+        product_id: item.id,
+        quantity: item.quantity,
+      }))
 
-        router.push('/checkout/invoice')
-      } catch (error) {
-        console.error('Error creando orden:', error)
-        // Fallback si hay error
-        localStorage.setItem('cartItems', JSON.stringify(cartItems))
-        localStorage.setItem('subtotal', subtotal.toString())
-        localStorage.setItem('tax', tax.toString())
-        localStorage.setItem('total', total.toString())
-        router.push('/checkout/invoice')
-      }
-    } else {
-      // Si no hay token, usar localStorage (para testing local)
-      localStorage.setItem('cartItems', JSON.stringify(cartItems))
-      localStorage.setItem('subtotal', subtotal.toString())
-      localStorage.setItem('tax', tax.toString())
-      localStorage.setItem('total', total.toString())
-      router.push('/checkout/invoice')
+      const response = await createOrder(orderItems, token)
+      
+      // Redirigir al invoice con el ID de la orden
+      router.push(`/checkout/invoice?orderId=${response.data?.id || ''}`)
+    } catch (error) {
+      console.error('Error creando orden:', error)
+      alert('Error al procesar la orden. Por favor intenta de nuevo.')
     }
   }
 

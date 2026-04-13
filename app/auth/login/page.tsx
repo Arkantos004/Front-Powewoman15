@@ -8,11 +8,13 @@ import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Mail, Lock, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, Mail, Lock, ArrowLeft } from 'lucide-react'
 import { login } from '@/lib/api'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login: authLogin } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -35,18 +37,17 @@ export default function LoginPage() {
       // Llamar a la API de login
       const response = await login(email, password)
       
-      if (response.data?.token) {
-        // Guardar token en localStorage
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user || { email }))
+      if (response.data?.token && response.data?.user) {
+        // Usar el hook de autenticación
+        authLogin(response.data.user, response.data.token)
         
         // Mostrar mensaje de éxito
-        setSuccess('✅ ¡Login exitoso! Redirigiendo al carrito...')
+        setSuccess('✅ ¡Login exitoso! Redirigiendo...')
         console.log('🎉 Usuario logueado:', response.data.user)
         
-        // Redirigir al checkout después de 1.5 segundos
+        // Redirigir al inicio después de 1.5 segundos
         setTimeout(() => {
-          router.push('/checkout')
+          router.push('/')
         }, 1500)
       } else {
         setError('Ha ocurrido un error en la autenticación')

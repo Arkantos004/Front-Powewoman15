@@ -8,16 +8,23 @@ import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Mail, Lock, User, ArrowLeft } from 'lucide-react'
+import { CheckCircle2, Mail, Lock, User, ArrowLeft } from 'lucide-react'
 import { register } from '@/lib/api'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { login: authLogin } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
+    phone: '',
+    address: '',
+    city: '',
+    country: '',
+    postalCode: '',
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -34,7 +41,7 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     // Validación
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword || !formData.phone || !formData.address || !formData.city || !formData.country || !formData.postalCode) {
       setError('Por favor complete todos los campos')
       setIsLoading(false)
       return
@@ -54,20 +61,25 @@ export default function RegisterPage() {
 
     try {
       // Llamar a la API de registro
-      const response = await register(formData.email, formData.name, formData.password)
+      const response = await register(formData.email, formData.name, formData.password, {
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        country: formData.country,
+        postalCode: formData.postalCode,
+      })
       
-      if (response.data?.token) {
-        // Guardar token en localStorage
-        localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user || { email: formData.email, full_name: formData.name }))
+      if (response.data?.token && response.data?.user) {
+        // Usar el hook de autenticación para guardar
+        authLogin(response.data.user, response.data.token)
         
         // Mostrar mensaje de éxito
         setSuccess('✅ ¡Registro exitoso! Redirigiendo al carrito...')
         console.log('🎉 Usuario registrado:', response.data.user)
         
-        // Redirigir al checkout después de 1.5 segundos
+        // Redirigir al inicio después de 1.5 segundos
         setTimeout(() => {
-          router.push('/checkout')
+          router.push('/')
         }, 1500)
       } else {
         setError('Ha ocurrido un error en el registro')
@@ -182,6 +194,85 @@ export default function RegisterPage() {
                     className="pl-10"
                   />
                 </div>
+              </div>
+
+              <hr className="my-4" />
+              <p className="text-xs text-muted-foreground font-semibold mb-4">Información de Contacto y Dirección</p>
+
+              <div>
+                <Label htmlFor="phone" className="text-sm font-medium">
+                  Teléfono
+                </Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="+57 300 1234567"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="address" className="text-sm font-medium">
+                  Dirección
+                </Label>
+                <Input
+                  id="address"
+                  name="address"
+                  type="text"
+                  placeholder="Calle 123 #45-67"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="mt-2"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="city" className="text-sm font-medium">
+                    Ciudad
+                  </Label>
+                  <Input
+                    id="city"
+                    name="city"
+                    type="text"
+                    placeholder="Medellín"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="country" className="text-sm font-medium">
+                    País
+                  </Label>
+                  <Input
+                    id="country"
+                    name="country"
+                    type="text"
+                    placeholder="Colombia"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="postalCode" className="text-sm font-medium">
+                  Código Postal
+                </Label>
+                <Input
+                  id="postalCode"
+                  name="postalCode"
+                  type="text"
+                  placeholder="050001"
+                  value={formData.postalCode}
+                  onChange={handleChange}
+                  className="mt-2"
+                />
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>
