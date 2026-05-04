@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react'
 import { requestInstructor } from '@/lib/api'
@@ -17,17 +19,44 @@ export default function RequestInstructorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  
+  const [formData, setFormData] = useState({
+    expertise_areas: '',
+    portfolio_url: '',
+    years_experience: '',
+  })
 
-  const handleRequest = async () => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  const handleRequest = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsSubmitting(true)
     setError(null)
 
     try {
-      await requestInstructor()
-      setSuccess(true)
-      setTimeout(() => {
-        router.push('/profile')
-      }, 2000)
+      const yearsExp = formData.years_experience ? parseInt(formData.years_experience) : undefined
+
+      const response = await requestInstructor({
+        expertise_areas: formData.expertise_areas || undefined,
+        portfolio_url: formData.portfolio_url || undefined,
+        years_experience: yearsExp,
+      })
+
+      if (response.success) {
+        setSuccess(true)
+        setTimeout(() => {
+          router.push('/profile')
+        }, 2000)
+      } else {
+        setError(response.error || 'Error al enviar solicitud')
+        setIsSubmitting(false)
+      }
     } catch (err: any) {
       setError(err.message)
       setIsSubmitting(false)
@@ -167,40 +196,101 @@ export default function RequestInstructorPage() {
               {/* Solicitud Card */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Tu información</CardTitle>
+                  <CardTitle className="text-lg">Información Profesional</CardTitle>
+                  <CardDescription>Completa los siguientes datos para tu solicitud</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Email</label>
-                    <p className="mt-1 text-foreground font-medium">{user?.email}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Nombre Completo</label>
-                    <p className="mt-1 text-foreground font-medium">{user?.full_name}</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Al continuar, aceptas que el equipo de admin evalúe tu solicitud. 
-                    Nos da una respuesta en 24-48 horas.
-                  </p>
+                <CardContent>
+                  <form onSubmit={handleRequest} className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Email</label>
+                      <p className="mt-1 text-foreground font-medium">{user?.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Nombre Completo</label>
+                      <p className="mt-1 text-foreground font-medium">{user?.full_name}</p>
+                    </div>
+
+                    {/* Áreas de Expertise */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Áreas de Expertise *
+                      </label>
+                      <Textarea
+                        name="expertise_areas"
+                        placeholder="Ej: Maquillaje profesional, Diseño de cejas, Cuidado de la piel, etc."
+                        value={formData.expertise_areas}
+                        onChange={handleChange}
+                        required
+                        className="min-h-20"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Describe las áreas en las que tienes experiencia y puedes enseñar
+                      </p>
+                    </div>
+
+                    {/* Años de Experiencia */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Años de Experiencia
+                      </label>
+                      <Input
+                        type="number"
+                        name="years_experience"
+                        placeholder="Ej: 5"
+                        min="0"
+                        value={formData.years_experience}
+                        onChange={handleChange}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Tu experiencia profesional en la industria (opcional)
+                      </p>
+                    </div>
+
+                    {/* Portfolio URL */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        Portfolio o Web
+                      </label>
+                      <Input
+                        type="url"
+                        name="portfolio_url"
+                        placeholder="https://..."
+                        value={formData.portfolio_url}
+                        onChange={handleChange}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Link a tu portafolio, Instagram, LinkedIn o sitio web (opcional)
+                      </p>
+                    </div>
+
+                    {/* Términos */}
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-foreground">
+                        ✓ Aceptas nuestros términos de instructora<br />
+                        ✓ Tu solicitud será revisada por el equipo de admin<br />
+                        ✓ Recibirás una respuesta en máximo 5 días hábiles
+                      </p>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-3 pt-4">
+                      <Link href="/profile" className="flex-1">
+                        <Button variant="outline" className="w-full">
+                          Cancelar
+                        </Button>
+                      </Link>
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex-1 gap-2"
+                      >
+                        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
-
-              {/* Buttons */}
-              <div className="flex gap-3">
-                <Link href="/profile" className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    Cancelar
-                  </Button>
-                </Link>
-                <Button
-                  onClick={handleRequest}
-                  disabled={isSubmitting}
-                  className="flex-1 gap-2"
-                >
-                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
-                </Button>
-              </div>
             </div>
           </div>
         </section>

@@ -10,6 +10,10 @@ export interface AuthUser {
   city?: string
   country?: string
   postal_code?: string
+  is_admin?: boolean
+  is_instructor?: boolean
+  instructor_approved?: boolean
+  profile_image_url?: string
 }
 
 export function useAuth() {

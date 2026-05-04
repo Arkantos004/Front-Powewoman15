@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer id="contacto" className="bg-foreground text-background">
       <div className="container mx-auto px-4 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="font-serif text-2xl font-bold">
@@ -91,6 +91,28 @@ export function Footer() {
               <li>
                 <Link href="#" className="text-background/70 hover:text-background text-sm transition-colors">
                   Envíos
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Únete a Nosotros */}
+          <div>
+            <h3 className="font-semibold mb-4">Únete a Nosotros</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/profile/request-instructor" className="text-background/70 hover:text-background text-sm transition-colors font-medium">
+                  👑 Trabaja con Nosotros
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-background/70 hover:text-background text-sm transition-colors">
+                  Oportunidades
+                </Link>
+              </li>
+              <li>
+                <Link href="#" className="text-background/70 hover:text-background text-sm transition-colors">
+                  Colaboraciones
                 </Link>
               </li>
             </ul>

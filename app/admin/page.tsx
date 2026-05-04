@@ -41,6 +41,9 @@ interface InstructorRequest {
   email: string
   full_name: string
   instructor_request_date: string
+  expertise_areas?: string
+  portfolio_url?: string
+  years_experience?: number
 }
 
 interface User {
@@ -438,22 +441,16 @@ export default function AdminPage() {
                           </td>
                           <td className="px-6 py-4 text-center">
                             {u.is_admin ? (
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                ⚙️ Admin
-                              </span>
+                              <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-amber-800"></span>
                             ) : (
                               <span className="text-muted-foreground text-sm">-</span>
                             )}
                           </td>
                           <td className="px-6 py-4 text-center">
                             {u.is_instructor && u.instructor_approved ? (
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                📚 Aprobada
-                              </span>
+                              <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-blue-800"></span>
                             ) : u.is_instructor ? (
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                ⏳ Pendiente
-                              </span>
+                              <span className="inline-flex items-center justify-center w-2 h-2 rounded-full bg-yellow-600"></span>
                             ) : (
                               <span className="text-muted-foreground text-sm">-</span>
                             )}
@@ -481,7 +478,14 @@ export default function AdminPage() {
           {/* INSTRUCTOR REQUESTS TAB */}
           {activeTab === 'instructors' && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold">Solicitudes de Instructoras</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Solicitudes de Instructoras</h2>
+                <Link href="/admin/instructor-requests">
+                  <Button variant="outline" size="sm">
+                    Ver Detallado
+                  </Button>
+                </Link>
+              </div>
 
               {instructorsLoading ? (
                 <div className="text-center py-12">
@@ -504,6 +508,16 @@ export default function AdminPage() {
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg">{request.full_name}</h3>
                             <p className="text-sm text-muted-foreground">{request.email}</p>
+                            {(request as any).expertise_areas && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                📚 {(request as any).expertise_areas}
+                              </p>
+                            )}
+                            {(request as any).years_experience && (
+                              <p className="text-xs text-muted-foreground">
+                                ⭐ {(request as any).years_experience} años de experiencia
+                              </p>
+                            )}
                             <p className="text-xs text-muted-foreground mt-2">
                               Solicitado: {new Date(request.instructor_request_date).toLocaleDateString('es-CO')}
                             </p>

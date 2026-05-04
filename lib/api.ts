@@ -100,6 +100,27 @@ export async function fetchProducts(): Promise<any[]> {
 }
 
 /**
+ * Fetch all published courses
+ */
+export async function fetchCourses(): Promise<any[]> {
+  try {
+    console.log('📡 Fetching courses');
+    const response = await apiClient.get<ApiResponse>('/courses');
+    console.log('✅ Cursos cargados:', response.data);
+    
+    // Resolver URLs de imágenes para todos los cursos
+    const courses = response.data.data || response.data || [];
+    return courses.map((course: any) => ({
+      ...course,
+      image_url: resolveImageUrl(course.image_url),
+    }));
+  } catch (error: any) {
+    console.error('❌ Error fetching courses:', error.message);
+    return [];
+  }
+}
+
+/**
  * Create an order
  */
 export async function createOrder(items: any[], token?: string): Promise<ApiResponse> {
@@ -217,6 +238,70 @@ export async function getAllUsers(): Promise<ApiResponse> {
     return response.data;
   } catch (error: any) {
     console.error('❌ Error fetching users:', error.message);
+    throw new Error(error.response?.data?.error || error.message);
+  }
+}
+
+/**
+ * Request to become instructor
+ */
+export async function requestInstructor(data: {
+  expertise_areas?: string;
+  portfolio_url?: string;
+  years_experience?: number;
+}): Promise<ApiResponse> {
+  try {
+    console.log('📡 Solicitando ser instructora');
+    const response = await apiClient.post<ApiResponse>('/users/request-instructor', data);
+    console.log('✅ Solicitud enviada:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error en solicitud:', error.message);
+    throw new Error(error.response?.data?.error || error.message);
+  }
+}
+
+/**
+ * Get instructor requests (admin)
+ */
+export async function getInstructorRequests(): Promise<ApiResponse> {
+  try {
+    console.log('📡 Fetching instructor requests');
+    const response = await apiClient.get<ApiResponse>('/users/instructor/requests');
+    console.log('✅ Solicitudes cargadas:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching requests:', error.message);
+    throw new Error(error.response?.data?.error || error.message);
+  }
+}
+
+/**
+ * Approve instructor request (admin)
+ */
+export async function approveInstructor(userId: number): Promise<ApiResponse> {
+  try {
+    console.log('📡 Aprobando instructora:', userId);
+    const response = await apiClient.patch<ApiResponse>(`/users/${userId}/approve-instructor`);
+    console.log('✅ Instructora aprobada:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error aprobando:', error.message);
+    throw new Error(error.response?.data?.error || error.message);
+  }
+}
+
+/**
+ * Reject instructor request (admin)
+ */
+export async function rejectInstructor(userId: number): Promise<ApiResponse> {
+  try {
+    console.log('📡 Rechazando instructora:', userId);
+    const response = await apiClient.patch<ApiResponse>(`/users/${userId}/reject-instructor`);
+    console.log('✅ Instructora rechazada:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error rechazando:', error.message);
     throw new Error(error.response?.data?.error || error.message);
   }
 }
@@ -380,66 +465,6 @@ export async function uploadImage(file: File): Promise<{ url: string; filename: 
   } catch (error: any) {
     console.error('❌ Error subiendo imagen:', error.message)
     throw new Error(error.response?.data?.error || error.message || 'Error al subir imagen')
-  }
-}
-
-/**
- * Request to become an instructor
- */
-export async function requestInstructor(): Promise<ApiResponse> {
-  try {
-    console.log('📡 Solicitando ser instructora');
-    const response = await apiClient.post<ApiResponse>('/users/request-instructor');
-    console.log('✅ Solicitud enviada:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('❌ Error solicitando instructora:', error.message);
-    throw new Error(error.response?.data?.error || error.message || 'Error al solicitar ser instructora');
-  }
-}
-
-/**
- * Get instructor requests (Admin only)
- */
-export async function getInstructorRequests(): Promise<any[]> {
-  try {
-    console.log('📡 Obteniendo solicitudes de instructoras');
-    const response = await apiClient.get<ApiResponse>('/users/instructor/requests');
-    console.log('✅ Solicitudes obtenidas:', response.data);
-    return response.data.data || [];
-  } catch (error: any) {
-    console.error('❌ Error obteniendo solicitudes:', error.message);
-    return [];
-  }
-}
-
-/**
- * Approve instructor (Admin only)
- */
-export async function approveInstructor(userId: number): Promise<ApiResponse> {
-  try {
-    console.log('📡 Aprobando instructora:', userId);
-    const response = await apiClient.patch<ApiResponse>(`/users/${userId}/approve-instructor`);
-    console.log('✅ Instructora aprobada:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('❌ Error aprobando:', error.message);
-    throw new Error(error.response?.data?.error || error.message || 'Error al aprobar');
-  }
-}
-
-/**
- * Reject instructor request (Admin only)
- */
-export async function rejectInstructor(userId: number): Promise<ApiResponse> {
-  try {
-    console.log('📡 Rechazando solicitud de instructora:', userId);
-    const response = await apiClient.patch<ApiResponse>(`/users/${userId}/reject-instructor`);
-    console.log('✅ Solicitud rechazada:', response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error('❌ Error rechazando:', error.message);
-    throw new Error(error.response?.data?.error || error.message || 'Error al rechazar');
   }
 }
 
